@@ -1,0 +1,69 @@
+177054,CH4,eCO2=429,TVOC=37,AQI=1,R0=592022,R1=1,R2=1609480,R3=71758
+177069,CH5,eCO2=444,TVOC=44,AQI=1,R0=522339,R1=1,R2=1874261,R3=61704
+178008,CH1,eCO2=430,TVOC=37,AQI=1,R0=326870,R1=1,R2=1350204,R3=59812
+178024,CH2,eCO2=420,TVOC=33,AQI=1,R0=501380,R1=1,R2=1242340,R3=59995
+178039,CH3,eCO2=417,TVOC=31,AQI=1,R0=390562,R1=1,R2=1078449,R3=55520
+178054,CH4,eCO2=435,TVOC=40,AQI=1,R0=581891,R1=1,R2=1609480,R3=71298
+178069,CH5,eCO2=411,TVOC=28,AQI=1,R0=516363,R1=1,R2=1886991,R3=63742
+
+valeria@PC5:~/Desktop/ROS2_rUBot_mecanum_ws$ ros2 topic echo /ens160_data
+pose_x: 0.0
+pose_y: 0.0
+pose_theta: 0.0
+channel: 7
+eco2: 419.0
+tvoc: 32.0
+aqi: 1.0
+r0: 0.0
+r1: 562336.0
+r2: 1.0
+r3: 1.0
+---
+pose_x: 0.0
+pose_y: 0.0
+pose_theta: 0.0
+channel: 7
+eco2: 435.0
+tvoc: 39.0
+aqi: 1.0
+r0: 0.0
+r1: 454815.0
+r2: 1.0
+r3: 1.0
+---
+pose_x: 0.0
+pose_y: 0.0
+pose_theta: 0.0
+channel: 7
+eco2: 434.0
+tvoc: 39.0
+aqi: 1.0
+r0: 0.0
+r1: 694805.0
+r2: 1.0
+r3: 1.0
+---
+pose_x: 0.0
+pose_y: 0.0
+pose_theta: 0.0
+channel: 7
+eco2: 432.0
+tvoc: 38.0
+aqi: 1.0
+r0: 0.0
+r1: 599685.0
+r2: 1.0
+r3: 1.0
+---
+pose_x: 0.0
+pose_y: 0.0
+pose_theta: 0.0
+channel: 7
+eco2: 426.0
+tvoc: 35.0
+aqi: 1.0
+r0: 0.0
+r1: 404007.0
+r2: 1.0
+r3: 1.0
+---

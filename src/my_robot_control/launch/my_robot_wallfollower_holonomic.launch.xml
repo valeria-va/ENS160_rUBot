@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="distance_laser" default="0.4"/>
+    <arg name="forward_speed" default="0.2"/>
+    <arg name="max_strafe_speed" default="0.3"/>
+    <arg name="strafe_factor" default="1.5"/>
+    <arg name="rotation_speed" default="0.5"/>
+    <arg name="time_to_stop" default="50.0"/>
+
+    <node pkg="my_robot_control" exec="my_robot_wallfollower_holonomic_exec" name="wall_follower_holonomic_node" output="screen">
+        <param name="distance_laser" value="$(var distance_laser)"/>
+        <param name="forward_speed" value="$(var forward_speed)"/>
+        <param name="rotation_speed" value="$(var rotation_speed)"/>
+        <param name="time_to_stop" value="$(var time_to_stop)"/>
+        <param name="max_strafe_speed" value="$(var max_strafe_speed)"/>
+        <param name="strafe_factor" value="$(var strafe_factor)"/>
+
+    </node>
+</launch>

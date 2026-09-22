@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ROS Web Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js"></script>
+  <style>
+    :root{
+      --gap: 16px;
+      --card-bg: #fff;
+      --card-bd: #ccc;
+      --page-bg: #2f2f2f;
+      --panel-width: 320px; /* width for right column */
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      margin: 0;
+      padding: 18px;
+      background-color: var(--page-bg);
+      color: #e6e6e6;
+    }
+
+    .connection-form {
+      width: 100%;
+      margin-bottom: var(--gap);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .connection-form label { color: #fff; font-weight:600 }
+    .connection-form input[type="text"]{
+      width: 220px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      background: #fff;
+      color: #000;
+    }
+    .connection-form button{
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    .connection-form button.connected {
+      background: #2ecc71;
+      border-color: #2ecc71;
+      color: #fff;
+    }
+
+    /* Grid layout: map is dominant, right column fixed width */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr var(--panel-width);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "camera right"
+        "map    right";
+      gap: var(--gap);
+      align-items: start;
+    }
+
+    /* camera takes full width above map */
+    #camera-feed     { grid-area: camera; width: 100%; height: 260px; object-fit: cover; border-radius: 6px; border: 1px solid var(--card-bd); background:#000; display:block }
+    .right-panel     { grid-area: right; }
+    .map-display     { grid-area: map; }
+
+    .panel {
+      padding: 12px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-bd);
+      border-radius: 6px;
+      color: #222;
+    }
+
+    .right-panel { display:flex; flex-direction:column; gap:12px; }
+
+    .joystick-container {
+      width: 220px;
+      height: 220px;
+      background-color: #eee;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      margin: 0 auto;
+    }
+
+    .map-display .map-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px }
+    .map-canvas-wrap { width:100%; height:520px; }
+    canvas#map-canvas { width:100%; height:100%; display:block; border-radius:6px; border:1px solid var(--card-bd); }
+
+    .info-group { display:flex; gap:12px; }
+    .info-box { flex:1; padding:8px; border-radius:6px; background:#fbfbfb; border:1px solid #ddd; color:#222 }
+
+    .readings-container { max-height: 220px; overflow:auto; padding:6px; background:#fff; border-radius:4px }
+    .sensor-channel { margin-bottom:8px; border:1px solid #ddd; padding:6px; border-radius:4px; background:#f8f8f8 }
+
+    .eco2-legend { padding:10px; border-radius:6px; background:#fff; color:#222; width:100%; }
+    .legend-gradient { width:28px; height:150px; border:1px solid #888; background: linear-gradient(to top, #70fdff, #7bff7b, #f6ff53, #ffca61, #ff4343); }
+
+    @media (max-width: 1000px) {
+      :root { --panel-width: 280px }
+      .dashboard { grid-template-columns: 1fr; grid-template-areas: "camera" "map" "right" }
+      #camera-feed { height: 200px }
+      .map-canvas-wrap { height: 360px }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="connection-form">
+    <label for="robotHost">Robot rosbridge (host:port)</label>
+    <input id="robotHost" type="text" value="172.20.10.8:9090" title="robot host:port" />
+    <button id="connectBtn" onclick="connectToROS()">Connect</button>
+  </div>
+
+  <div class="dashboard">
+    <img id="camera-feed" alt="Camera Feed" />
+
+    <aside class="right-panel">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700">Joystick</div>
+          <div style="font-size:0.9rem">ω: <span id="omegaVal">0.00</span></div>
+        </div>
+        <div class="joystick-container" id="joystick_h"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px">
+          <div style="font-size:0.95rem">vₓ: <span id="vx">0.00</span></div>
+          <div style="font-size:0.95rem">vᵧ: <span id="vy">0.00</span></div>
+        </div>
+      </div>
+
+      <div class="panel eco2-legend">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700">CSV Logging</div>
+          <div>
+            <button id="startLogBtn">Start</button>
+            <button id="stopLogBtn">Stop</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="legend-gradient"></div>
+          <div style="font-size:0.95rem;line-height:1.6">2000+<br>1200<br>400</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <div class="map-display panel">
+      <div class="map-header">
+        <h3 style="margin:0">Map + LiDAR</h3>
+        <div style="font-size:0.9rem">eCO2: <strong id="eco2Val">—</strong></div>
+      </div>
+      <div class="map-canvas-wrap"><canvas id="map-canvas"></canvas></div>
+
+      <div style="display:flex;gap:12px;margin-top:10px">
+        <div class="info-box">
+          <div style="font-weight:700">Position</div>
+          <div>X: <span id="position-x">0.00</span> m</div>
+          <div>Y: <span id="position-y">0.00</span> m</div>
+          <div>θ: <span id="rotation-z">0.0</span> º</div>
+        </div>
+
+        <div style="flex:1">
+          <div style="font-weight:700;margin-bottom:6px">Sensor Readings</div>
+          <div class="readings-container" id="readings">Awaiting Data...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let ros;
+    let cmdVelTopic;
+
+    const MAP_RESOLUTION = 0.01; // m/px
+    const ROBOT_LEN = 0.30;
+    const ROBOT_WID = 0.20;
+    const SPEED_VECTOR_GAIN = 0.5;
+    const maxSpeed = 0.3;
+    const maxTurn  = 0.4;
+
+    let currentLinearX = 0;
+    let currentLinearY = 0;
+    let currentAngularZ = 0;
+
+    let latestScan = null;
+    let lastRobotX = 0, lastRobotY = 0, lastRobotYaw = 0;
+    let eCO2DataPoints = [];
+
+    const EXPECTED_KEYS = ['eCO2','TVOC','AQI','R0','R1','R2','R3'];
+    const KEYS_PER_CHANNEL = EXPECTED_KEYS.length;
+
+    function quaternionToYaw(q) {
+      const siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+      const cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+      return Math.atan2(siny_cosp, cosy_cosp);
+    }
+
+    function connectToROS() {
+      const input = document.getElementById('robotHost');
+      const host = (input && input.value) ? input.value.trim() : '172.20.10.8:9090';
+      const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+      const rosbridgeAddress = `${scheme}://${host}`;
+
+      const btn = document.getElementById('connectBtn');
+      btn.disabled = true;
+      ros = new ROSLIB.Ros({ url: rosbridgeAddress });
+
+      ros.on('connection', () => {
+        console.log('Connected to', rosbridgeAddress);
+        btn.classList.add('connected');
+        btn.disabled = false;
+        setupTopics();
+        setupControls();
+      });
+
+      ros.on('error', (e) => {
+        console.error('Connection Error:', e);
+        btn.classList.remove('connected');
+        btn.disabled = false;
+      });
+
+      ros.on('close', () => {
+        console.log('Connection closed.');
+        btn.classList.remove('connected');
+        btn.disabled = false;
+      });
+    }
+
+    function setupTopics() {
+      cmdVelTopic = new ROSLIB.Topic({ ros, name: '/cmd_vel', messageType: 'geometry_msgs/msg/Twist' });
+
+      const imageTopic = new ROSLIB.Topic({ ros, name: 'camera1/image_raw/compressed', messageType: 'sensor_msgs/msg/CompressedImage' });
+      imageTopic.subscribe(msg => document.getElementById('camera-feed').src = "data:image/jpeg;base64," + msg.data);
+
+      const odomTopic = new ROSLIB.Topic({ ros, name: '/odom', messageType: 'nav_msgs/msg/Odometry' });
+      odomTopic.subscribe(msg => {
+        const p = msg.pose.pose.position;
+        const o = msg.pose.pose.orientation;
+        const t = msg.twist.twist;
+
+        const yawAbs = quaternionToYaw(o);
+        lastRobotX = p.x; lastRobotY = p.y; lastRobotYaw = yawAbs;
+        document.getElementById('position-x').textContent = lastRobotX.toFixed(2);
+        document.getElementById('position-y').textContent = lastRobotY.toFixed(2);
+        document.getElementById('rotation-z').textContent = (lastRobotYaw*180/Math.PI).toFixed(1);
+
+        drawRobotState();
+      });
+
+      const scanTopic = new ROSLIB.Topic({ ros, name: '/scan', messageType: 'sensor_msgs/msg/LaserScan' });
+      scanTopic.subscribe(msg => { latestScan = msg; drawRobotState(); });
+
+      const sensorTopic = new ROSLIB.Topic({ ros, name: 'ens160_fused_data', messageType: 'ens160_interfaces/msg/SensorData' });
+      sensorTopic.subscribe(message => {
+        updateSensorDisplay(message.sensor_readings);
+        const ch0_eco2_index = EXPECTED_KEYS.indexOf('eCO2');
+        if (message.sensor_readings && message.sensor_readings.length > ch0_eco2_index) {
+          const newECO2 = message.sensor_readings[ch0_eco2_index];
+          document.getElementById('eco2Val').textContent = Math.round(newECO2);
+          eCO2DataPoints.push({ x: lastRobotX, y: lastRobotY, eco2: newECO2 });
+          drawRobotState();
+        }
+      });
+
+      // Setup CSV logging buttons after topics are ready
+      setupCSVLoggingButtons();
+    }
+
+    function updateSensorDisplay(readings) {
+      const container = document.getElementById('readings');
+      container.innerHTML = '';
+      if (!readings || readings.length === 0) { container.innerHTML = '<div>No sensor data received.</div>'; return; }
+
+      const receivedChannels = Math.floor(readings.length / KEYS_PER_CHANNEL);
+      let html = '';
+      for (let i = 0; i < receivedChannels; i++) {
+        html += `<div class="sensor-channel"><strong>CH${i}</strong><ul>`;
+        for (let j=0;j<KEYS_PER_CHANNEL;j++) {
+          const idx = i*KEYS_PER_CHANNEL + j;
+          const val = readings[idx] !== undefined ? readings[idx].toFixed(2) : 'N/A';
+          html += `<li>${EXPECTED_KEYS[j]}: ${val}</li>`;
+        }
+        html += '</ul></div>';
+      }
+      container.innerHTML = html;
+    }
+
+    function setupCSVLoggingButtons() {
+      const startBtn = document.getElementById('startLogBtn');
+      const stopBtn  = document.getElementById('stopLogBtn');
+      if (!ros) return;
+      const startService = new ROSLIB.Service({ ros, name: '/start_csv_logging', serviceType: 'std_srvs/srv/Trigger' });
+      const stopService  = new ROSLIB.Service({ ros, name: '/stop_csv_logging', serviceType: 'std_srvs/srv/Trigger' });
+
+      startBtn.onclick = () => { startService.callService(new ROSLIB.ServiceRequest(), (res)=>{ console.log('start',res); startBtn.disabled=true; stopBtn.disabled=false; }); };
+      stopBtn.onclick  = () => { stopService.callService(new ROSLIB.ServiceRequest(), (res)=>{ console.log('stop',res); startBtn.disabled=false; stopBtn.disabled=true; }); };
+      stopBtn.disabled = true;
+    }
+
+    /* Drawing and controls */
+    function resizeCanvasToDisplaySize(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        return true;
+      }
+      return false;
+    }
+
+    function drawRobotState() {
+      const canvas = document.getElementById('map-canvas');
+      if (!canvas) return;
+      resizeCanvasToDisplaySize(canvas);
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width; const H = canvas.height;
+
+      ctx.clearRect(0,0,W,H);
+
+      // simple grid
+      ctx.save();
+      ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0,0,W,H);
+      ctx.restore();
+
+      // draw last scan points (if any)
+      if (latestScan && Array.isArray(latestScan.ranges)) {
+        ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        const cx = W/2, cy = H/2;
+        for (let i=0;i<latestScan.ranges.length;i+=2){
+          const r = latestScan.ranges[i];
+          if (!isFinite(r)) continue;
+          const ang = latestScan.angle_min + i*latestScan.angle_increment;
+          const x = cx + (r/ MAP_RESOLUTION) * Math.cos(ang);
+          const y = cy - (r/ MAP_RESOLUTION) * Math.sin(ang);
+          ctx.fillRect(x,y,2,2);
+        }
+        ctx.restore();
+      }
+
+      // draw eCO2 points
+      for (const p of eCO2DataPoints) {
+        const px = W/2 + (p.y/ MAP_RESOLUTION);
+        const py = H/2 - (p.x/ MAP_RESOLUTION);
+        ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
+        ctx.fillStyle = getECO2Color(p.eco2); ctx.fill();
+      }
+
+      // draw robot as rectangle in center
+      const rrw = (ROBOT_LEN/ MAP_RESOLUTION); const rrh = (ROBOT_WID/ MAP_RESOLUTION);
+      ctx.save(); ctx.translate(W/2, H/2); ctx.rotate(-lastRobotYaw);
+      ctx.fillStyle='rgba(0,180,0,0.6)'; ctx.fillRect(-rrw/2,-rrh/2,rrw,rrh);
+      ctx.restore();
+    }
+
+    function getECO2Color(eco2){
+      const min=400,max=2000; let v=(eco2-min)/(max-min); v=Math.max(0,Math.min(1,v));
+      if (v<0.25) return 'rgba(112,253,255,0.9)';
+      if (v<0.5) return 'rgba(123,255,123,0.9)';
+      if (v<0.75) return 'rgba(246,255,83,0.9)';
+      if (v<0.9) return 'rgba(255,202,97,0.9)';
+      return 'rgba(255,67,67,0.95)';
+    }
+
+    /* joystick + publishing */
+    function setupControls(){
+      const j = nipplejs.create({ zone: document.getElementById('joystick_h'), mode:'static', position:{left:'50%',top:'50%'}, size:160 });
+      const vxSpan = document.getElementById('vx'); const vySpan = document.getElementById('vy'); const omegaVal = document.getElementById('omegaVal');
+      j.on('move',(evt,data)=>{ const ratio=Math.min(data.distance/75,1); const a=data.angle.radian; currentLinearX=Math.sin(a)*maxSpeed*ratio; currentLinearY=-Math.cos(a)*maxSpeed*ratio; vxSpan.textContent=currentLinearX.toFixed(2); vySpan.textContent=currentLinearY.toFixed(2); publishTwist(); });
+      j.on('end',()=>{ currentLinearX=0; currentLinearY=0; vxSpan.textContent='0.00'; vySpan.textContent='0.00'; publishTwist(); });
+
+      const omegaSlider = document.createElement('input'); omegaSlider.type='range'; omegaSlider.min=-1; omegaSlider.max=1; omegaSlider.step=0.01; omegaSlider.value=0;
+      omegaSlider.addEventListener('input',()=>{ currentAngularZ = -parseFloat(omegaSlider.value)*maxTurn; omegaVal.textContent=currentAngularZ.toFixed(2); publishTwist(); });
+      document.querySelector('.panel').appendChild(omegaSlider);
+
+      setInterval(()=>{ publishTwist(); }, 100);
+    }
+
+    function publishTwist(){ if(!ros || !cmdVelTopic) cmdVelTopic = new ROSLIB.Topic({ ros, name: '/cmd_vel', messageType: 'geometry_msgs/msg/Twist' });
+      const twist = new ROSLIB.Message({ linear:{x:-currentLinearX,y:currentLinearY,z:0}, angular:{x:0,y:0,z:currentAngularZ} });
+      cmdVelTopic.publish(twist);
+    }
+
+    window.addEventListener('resize', ()=>{ drawRobotState(); });
+  </script>
+</body>
+</html>

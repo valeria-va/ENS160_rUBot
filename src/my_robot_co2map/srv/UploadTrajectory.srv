@@ -1,0 +1,4 @@
+geometry_msgs/PoseStamped[] poses
+---
+bool accepted
+string message

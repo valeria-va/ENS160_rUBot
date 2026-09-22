@@ -1,0 +1,4 @@
+float32 fl_rad_sec
+float32 fr_rad_sec
+float32 bl_rad_sec
+float32 br_rad_sec

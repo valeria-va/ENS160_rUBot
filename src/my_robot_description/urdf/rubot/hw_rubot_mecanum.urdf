@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<robot name="hw_rubot_mecanum">
+
+  <!-- Base link -->
+  <link name="base_link"/>
+
+  <!-- Wheels -->
+  <joint name="upper_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="upper_left_wheel"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="upper_left_wheel"/>
+
+  <joint name="lower_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="lower_left_wheel"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="lower_left_wheel"/>
+
+  <joint name="upper_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="upper_right_wheel"/>
+    <axis xyz="0 -1 0"/>
+  </joint>
+  <link name="upper_right_wheel"/>
+
+  <joint name="lower_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="lower_right_wheel"/>
+    <axis xyz="0 -1 0"/>
+  </joint>
+  <link name="lower_right_wheel"/>
+
+  <!-- Top part of robot -->
+  <joint name="top_part_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="top_part"/>
+  </joint>
+  <link name="top_part"/>
+
+  <!-- Camera -->
+  <joint name="joint_camera" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera"/>
+  </joint>
+  <link name="camera"/>
+
+  <!-- LiDAR / Base scan -->
+  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+  </joint>
+  <link name="base_scan"/>
+
+</robot>
