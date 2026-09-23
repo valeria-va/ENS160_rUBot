@@ -1,3 +1,11 @@
+## 📡 Data Acquisition Streams
+
+### 1. Direct Serial Stream
+This format represents **only what the sensor array publishes**. It streams raw environmental readings directly from the ENS160 sensor channels without any knowledge of position.
+
+* **Purpose:** Benchtop testing, individual channel calibration, and static directionality experiments.
+* **Data Included:** Stamp, multiplexer channel, and raw gas readings ($e\text{CO}_2$, $\text{TVOC}$, $\text{AQI}$, resistance $R_0$–$R_3$).
+
 177054,CH4,eCO2=429,TVOC=37,AQI=1,R0=592022,R1=1,R2=1609480,R3=71758
 177069,CH5,eCO2=444,TVOC=44,AQI=1,R0=522339,R1=1,R2=1874261,R3=61704
 178008,CH1,eCO2=430,TVOC=37,AQI=1,R0=326870,R1=1,R2=1350204,R3=59812
@@ -5,6 +13,12 @@
 178039,CH3,eCO2=417,TVOC=31,AQI=1,R0=390562,R1=1,R2=1078449,R3=55520
 178054,CH4,eCO2=435,TVOC=40,AQI=1,R0=581891,R1=1,R2=1609480,R3=71298
 178069,CH5,eCO2=411,TVOC=28,AQI=1,R0=516363,R1=1,R2=1886991,R3=63742
+
+### 2. Integrated Robot Publisher (ROS 2 Topic: /ens160_data)
+This format represents what the **mobile robot publishes overall**. It combines the sensor readings with the robot's real-time 2D spatial position and yaw ($x, y, \theta$).
+
+* **Purpose:** Spatial gas mapping, autonomous exploration
+* **Data Included:** Robot Pose and Sensor Stream
 
 valeria@PC5:~/Desktop/ROS2_rUBot_mecanum_ws$ ros2 topic echo /ens160_data
 pose_x: 0.0
