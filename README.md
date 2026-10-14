@@ -9,10 +9,17 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros&logoColor=white" alt="ROS 2 Humble">
-  <img src="https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 22.04">
-  <img src="https://img.shields.io/badge/Sensor-ENS160-2E7D32" alt="ENS160">
-  <img src="https://img.shields.io/badge/Navigation-Nav2-1976D2" alt="Nav2">
+  <a href="https://docs.ros.org/en/humble/">
+    <img src="https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros&logoColor=white" alt="ROS 2 Humble">
+  </a>
+  
+  <a href="https://ubuntu.com/download">
+    <img src="https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 22.04">
+  </a>
+  
+  <a href="https://www.mikroe.com/air-quality-9-click?srsltid=AU7gw4VSYPO8XkHUIXasTgdrX9GK8kHTkKITEd9MG7hDo8kLV7ezNSHM">
+    <img src="https://img.shields.io/badge/Sensor-ENS160-2E7D32" alt="ENS160">
+  </a>
 </p>
 
 <p align="center">
