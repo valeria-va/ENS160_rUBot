@@ -27,7 +27,7 @@
 
 ## Overview
 
-**rUBot** is a ROS 2 Humble mobile robot with an array of **ENS160 gas sensors**. It combines SLAM, localization and gas sensing so that every measurement is tied to a position on the map. You can watch eCO₂ levels live in RViz and generate concentration heatmaps offline.
+**rUBot** is a ROS 2 Humble mobile robot with an array of **ENS160 gas sensors**. It combines SLAM and gas sensing so that every measurement is tied to a position on the map. You can watch eCO₂ levels live in RViz and generate concentration heatmaps offline.
 
 <p align="center">
   <img src="src/my_robot_co2map/img/Corridor_results.png" alt="Corridor eCO2 mapping results" width="800">
