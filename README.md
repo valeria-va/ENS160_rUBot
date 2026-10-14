@@ -48,7 +48,7 @@
 ## Requirements
 
 - 🐧 Ubuntu 22.04 with **ROS 2 Humble**
-- 🤖 rUBot hardware and ENS160 sensors *(only for physical experiments)*
+- 🤖 rUBot hardware and ENS160 sensors, in this project Air Quality 9 Click modules by MIKROE were used
 - 📦 The required workspace packages and dependencies
 
 ## How to Use
@@ -162,7 +162,7 @@ ros2 run ens160_sensors csv_logger_co2cloud
 > [!TIP]
 > Offline analysis does not require the robot or the ROS 2 network to be running.
 
-## Nodes and Topics
+## Relevant Nodes and Topics
 
 | Node | Function |
 |---|---|
